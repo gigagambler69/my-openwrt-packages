@@ -1,4 +1,4 @@
-name: Kompilacja wtyczki Argon dla AX3600
+name: Kompilacja wtyczki Argon dla AX3600 (Wydanie 25.12.4)
 
 on:
   workflow_dispatch:
@@ -16,12 +16,13 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y build-essential clang flex bison g++ gawk gcc-multilib g++-multilib gettext git libncurses5-dev libssl-dev python3-setuptools rsync swig unzip zlib1g-dev file wget
 
-    - name: Dynamiczne pobieranie najnowszego OpenWrt SDK (Qualcommax)
+    - name: Pobieranie OpenWrt SDK (25.12.4 Qualcommax)
       run: |
-        # Zaktualizowana ścieżka dla procesorów Qualcomm (AX3600)
-        SDK_NAME=$(wget -qO- https://downloads.openwrt.org/snapshots/targets/qualcommax/ipq807x/ | grep -oE 'openwrt-sdk-[^"]+\.tar\.xz' | head -n 1)
-        echo "Znaleziono SDK: $SDK_NAME"
-        wget "https://downloads.openwrt.org/snapshots/targets/qualcommax/ipq807x/$SDK_NAME"
+        # Celujemy dokładnie w folder, który podałeś!
+        SDK_URL="https://downloads.openwrt.org/releases/25.12.4/targets/qualcommax/ipq807x/"
+        SDK_NAME=$(wget -qO- $SDK_URL | grep -oE 'openwrt-sdk-[^"]+\.tar\.xz' | head -n 1)
+        echo "Znaleziono i pobieram SDK: $SDK_NAME"
+        wget "$SDK_URL$SDK_NAME"
         tar -xf openwrt-sdk-*.tar.xz
         mv openwrt-sdk-* openwrt-sdk
 
@@ -45,8 +46,8 @@ jobs:
         make defconfig
         make package/luci-app-argon-config/compile V=s
 
-    - name: Udostępnienie gotowego pliku .apk do pobrania
+    - name: Udostępnienie gotowego pliku do pobrania
       uses: actions/upload-artifact@v4
       with:
-        name: Gotowa_Paczka_Argon_APK
+        name: Gotowa_Paczka_Argon_Config
         path: openwrt-sdk/bin/**/*argon-config*
