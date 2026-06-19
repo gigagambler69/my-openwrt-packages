@@ -1,7 +1,7 @@
 name: Kompilacja wtyczki Argon dla AX3600
 
 on:
-  workflow_dispatch: # Pozwala na ręczne uruchomienie zielonym przyciskiem
+  workflow_dispatch:
 
 jobs:
   build:
@@ -18,7 +18,6 @@ jobs:
 
     - name: Dynamiczne pobieranie najnowszego OpenWrt SDK
       run: |
-        # Pobieramy listę plików dla architektury Xiaomi AX3600 (ipq807x) i szukamy pliku SDK
         SDK_NAME=$(wget -qO- https://downloads.openwrt.org/snapshots/targets/ipq807x/generic/ | grep -oE 'openwrt-sdk-[^"]+\.tar\.xz' | head -n 1)
         echo "Znaleziono SDK: $SDK_NAME"
         wget "https://downloads.openwrt.org/snapshots/targets/ipq807x/generic/$SDK_NAME"
@@ -31,17 +30,19 @@ jobs:
         ./scripts/feeds update -a
         ./scripts/feeds install -a
         cd package
-        # Pobieramy kod źródłowy wtyczki konfiguracyjnej Argona
         git clone https://github.com/jerrykuku/luci-app-argon-config.git
         cd ..
-        ./scripts/feeds update -i
-        ./scripts/feeds install luci-app-argon-config
+
+    - name: Instalacja brakujących zależności LuCI
+      run: |
+        cd openwrt-sdk
+        # Wymuszamy instalację pakietów, bez których stary konfigurator wyrzuca błąd podczas sprawdzania struktury
+        ./scripts/feeds install luci-base luci-compat
 
     - name: Właściwa kompilacja paczki
       run: |
         cd openwrt-sdk
         make defconfig
-        # Kompilujemy wyłącznie wybraną wtyczkę (V=s pokaże nam błędy, jeśli wystąpią)
         make package/luci-app-argon-config/compile V=s
 
     - name: Udostępnienie gotowego pliku .apk do pobrania
